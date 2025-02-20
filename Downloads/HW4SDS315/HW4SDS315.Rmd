@@ -1,0 +1,317 @@
+---
+title: "Homework 4 Statistical Thinking - Dakshin Bharath"
+output: html_document
+---
+### UTEID: db47567
+### Github Link: https://github.com/dakshinb/Homework4_SDS315.git
+
+
+
+# Problem 1
+
+```{r, echo=FALSE, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.width = 8, fig.height = 5, fig.align = "center")
+```
+
+## Null Hypothesis
+
+The null hypothesis is that Iron Bank's true flag rate equals the SEC's baseline rate of 2.4%.
+
+## Test Statistic
+
+Test statistic: Number of flagged trades (observed = 70 vs expected ≈ 48.5 under null).
+
+```{r, echo=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(mosaic)
+
+n_trades <- 2021
+baseline_prob <- 0.024
+observed_flags <- 70
+n_simulations <- 100000
+
+set.seed(123) # For reproducibility
+sim_results <- do(n_simulations) * {
+  data.frame(flagged = rbinom(1, size = n_trades, prob = baseline_prob))
+}
+sim_results
+
+p_value <- mean(sim_results$flagged >= observed_flags)
+p_value
+```
+
+## Probability Distribution Plot
+
+```{r, echo=FALSE, warning=FALSE}
+ggplot(sim_results, aes(x = flagged)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  geom_vline(xintercept = observed_flags, color = "red", linewidth = 1) +
+  labs(title = "Null Distribution of Flagged Trades",
+       x = "Number of Flagged Trades", 
+       y = "Frequency") +
+  theme_bw()
+```
+
+## Results
+
+-   **P-value**: `r signif(p_value, 3)`
+
+-   **Conclusion**: The null hypothesis appears `r ifelse(p_value < 0.05, "implausible", "plausible")` (p = `r signif(p_value, 3)`), suggesting the observed flag rate is significantly higher than the baseline rate.
+
+-   **One-Sentence Conclusion:** With a p-value of `r round(p_value, 4)` (well below the significance threshold of 0.05), we reject the null hypothesis and conclude that Iron Bank's flagged trades are occurring at a significantly higher rate than expected under random chance.
+
+# Problem 2: Health Inspections
+
+## Null Hypothesis:
+
+Gourmet Bites' true health code violation rate equals the citywide baseline rate of 3%.
+
+## Test Statistic:
+
+Number of health code violations (observed = 8 out of 50 inspections).
+
+```{r, echo=FALSE, warning=FALSE, include=FALSE}
+
+
+library(tidyverse)
+library(mosaic)
+
+set.seed(123)  # For reproducibility
+n_inspections <- 50
+baseline_prob <- 0.03
+observed_violations <- 8
+n_simulations <- 100000
+
+# Monte Carlo simulation under the null hypothesis
+sim_results <- do(n_simulations) * {
+  data.frame(violations = rbinom(1, size = n_inspections, prob = baseline_prob))
+}
+
+# Calculate the p-value: proportion of simulations with violations at least as extreme as observed
+p_value <- mean(sim_results$violations >= observed_violations)
+
+```
+
+```{r, echo=FALSE, warning=FALSE}
+
+
+
+# Generate the probability distribution plot of the test statistic (null distribution)
+ggplot(sim_results, aes(x = violations)) +
+  geom_histogram(binwidth = 1, fill = "purple", color = "black") +
+  geom_vline(xintercept = observed_violations, color = "red", linewidth = 1) +
+  labs(title = "Null Distribution of Health Code Violations",
+       x = "Number of Violations",
+       y = "Frequency") +
+  theme_bw()
+
+# Display the results with a one-sentence conclusion
+cat("Observed violations:", observed_violations, "\n",
+    "Expected under null:", round(n_inspections * baseline_prob, 1), "\n",
+    "P-value:", signif(p_value, 3), "\n",
+    "Conclusion: With a p-value of", round(p_value, 4),
+    "(well below the 0.05 threshold), we reject the null hypothesis and conclude that Gourmet Bites' violation rate is significantly higher than the citywide baseline.")
+```
+
+## Results
+
+-   **P-value**: `r signif(p_value, 3)`\
+-   **Conclusion**: The null hypothesis appears `r ifelse(p_value < 0.05, "implausible", "plausible")` (p = `r signif(p_value, 3)`), as observing 8 or more violations in 50 inspections is extremely unlikely under the 3% baseline rate.
+
+# Problem 3: Evaluating Jury Selection for Bias
+
+### Null Hypothesis
+
+The null hypothesis ($H_0$) is that the racial/ethnic distribution of jurors selected by this judge matches the county's population proportions.
+
+### Test Statistic
+
+The test statistic is the chi-squared statistic ($\chi^2$), which measures how much the observed counts deviate from the expected counts under the null hypothesis.
+
+```{r, include=FALSE, echo=FALSE, warning=FALSE}
+# Load libraries
+library(tidyverse)
+
+# Observed counts of jurors in each group
+observed <- c(85, 56, 59, 27, 13)
+
+# County population proportions for each group
+proportions <- c(0.30, 0.25, 0.20, 0.15, 0.10)
+
+# Total number of jurors across all trials
+total_jurors <- sum(observed)
+
+# Calculate expected counts under the null hypothesis
+expected <- total_jurors * proportions
+
+# Perform chi-squared test
+chi_squared_stat <- sum((observed - expected)^2 / expected)
+
+# Degrees of freedom: number of groups - 1
+df <- length(observed) - 1
+
+# Calculate p-value using chi-squared distribution
+p_value <- pchisq(chi_squared_stat, df = df, lower.tail = FALSE)
+
+# Display results
+cat("Chi-squared statistic:", round(chi_squared_stat, 2), "\n")
+cat("Degrees of freedom:", df, "\n")
+cat("P-value:", signif(p_value, 3), "\n")
+```
+
+### Probability Distribution Plot
+
+```{r, echo=FALSE, warning=FALSE}
+# Generate chi-squared distribution for visualization
+x_vals <- seq(0, max(chi_squared_stat) + 10, by = 0.1)
+y_vals <- dchisq(x_vals, df = df)
+
+# Plot chi-squared distribution
+ggplot(data.frame(x = x_vals, y = y_vals), aes(x = x, y = y)) +
+  geom_line(color = "gold") +
+  geom_vline(xintercept = chi_squared_stat, color = "red", linetype = "dashed") +
+  labs(title = "Chi-Squared Distribution",
+       x = "Chi-Squared Statistic",
+       y = "Density") +
+  theme_minimal()
+```
+
+### Results
+
+-   **Chi-squared statistic**: `r round(chi_squared_stat, 2)`
+-   **Degrees of freedom**: `r df`
+-   **P-value**: `r signif(p_value, 3)`
+
+### Conclusion
+
+With a p-value of `r signif(p_value, 3)`, we determine that: - If $p < 0.05$: The null hypothesis is rejected. This suggests that the observed jury composition is significantly different from the county's population proportions and may indicate bias in jury selection. - If $p \geq 0.05$: We fail to reject the null hypothesis. This suggests no significant evidence of bias in jury selection.
+
+**One-Sentence Conclusion:** Based on the p-value (`r signif(p_value, 3)`), we conclude that there is `r ifelse(p_value < 0.05, "evidence", "no evidence")` to suggest systematic bias in jury selection by this judge.
+
+## Problem 4: LLM Watermarking
+
+## Part A: Building the Null Distribution of the Chi-Squared Statistic
+
+Below we load the sentences from *brown_sentences.txt* and the predefined letter frequency distribution from *letter_frequencies.csv*, then, we preprocess each sentence—removing non-letter characters, converting to uppercase, and counting letter occurrences—to compute the observed letter counts. Using the total letters in each sentence and the expected probabilities, we compute the expected counts and calculate the chi-squared statistic for each sentence, and finally, we compile these chi-squared values into our null distribution and display summary statistics and a histogram.
+
+#### Null Hypothesis
+
+The null hypothesis ($H_0$) is that the letter frequencies in normal English sentences follow the predefined letter frequency distribution for English (from `letter_frequencies.csv`).
+
+```{r, echo=FALSE, warning=FALSE}
+# Load necessary libraries
+library(tidyverse)
+library(knitr)
+
+# 1. Read sentences: Load the sentences from "brown_sentences.txt"
+brown_sentences <- readLines("brown_sentences.txt")
+# Display the first 5 sentences to verify correct loading
+head(brown_sentences, 5)
+
+# 2. Load the predefined letter frequency distribution from "letter_frequencies.csv"
+letter_freq <- read.csv("letter_frequencies.csv", stringsAsFactors = FALSE)
+# Convert the letter column to uppercase to match LETTERS
+letter_freq$Letter <- toupper(letter_freq$Letter)
+# Display the letter frequency table in a formatted table (no underscores)
+kable(letter_freq, caption = "Predefined Letter Frequency Distribution")
+
+# 3. Define a function to preprocess each sentence and compute its chi-squared statistic.
+preprocess_text <- function(sentence) {
+  # Remove non-letter characters and convert to uppercase.
+  cleaned <- gsub("[^A-Za-z]", "", sentence)
+  cleaned <- toupper(cleaned)
+  
+  # Count occurrences of each letter (A-Z)
+  observed_counts <- table(factor(strsplit(cleaned, "")[[1]], levels = LETTERS))
+  
+  # Calculate the total number of letters in the sentence.
+  total_letters <- sum(observed_counts)
+  
+  # Handle any empty sentences.
+  if(total_letters == 0) return(NA)
+  
+  # 4. Calculate expected counts based on predefined probabilities.
+  expected_counts <- total_letters * letter_freq$Probability
+  
+  # 5. Compute the chi-squared statistic for this sentence.
+  chisq_stat <- sum((observed_counts - expected_counts)^2 / expected_counts)
+  
+  return(chisq_stat)
+}
+
+# 6. Compile the null distribution by applying the function to each sentence.
+null_distribution <- sapply(brown_sentences, preprocess_text)
+# Remove any NA values (if a sentence had no letters)
+null_distribution <- null_distribution[!is.na(null_distribution)]
+
+# Display summary statistics for the null distribution.
+summary(null_distribution)
+
+# 7. Plot a histogram of the chi-squared statistics (null distribution).
+ggplot(data.frame(ChiSquared = null_distribution), aes(x = ChiSquared)) +
+  geom_histogram(binwidth = 5, fill = "steelblue", color = "black") +
+  labs(title = "Null Distribution of Chi-Squared Statistics",
+       x = "Chi-Squared Statistic", y = "Frequency") +
+  theme_minimal()
+
+
+
+```
+
+## Part B: Checking for a Watermark
+
+```{r, echo=FALSE, warning=FALSE}
+# Load libraries
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# Test sentences
+test_sentences <- c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+# Compute chi-squared statistics for test sentences
+test_statistics <- sapply(test_sentences, preprocess_text)
+
+# Calculate p-values by comparing test statistics to null distribution
+p_values <- sapply(test_statistics, function(stat) mean(null_distribution >= stat))
+
+# Create results table
+results <- data.frame(
+  Sentence = seq_along(test_sentences),
+  Chi_Squared_Statistic = round(test_statistics, 2),
+  P_Value = round(p_values, 3)
+)
+
+# Display results as a styled table without underscores
+results %>%
+  kbl(caption = "Chi-Squared Statistics and P-Values for Test Sentences") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+### Results
+
+-   **Table of p-values**: The table above shows p-values for each sentence under $H_0$. Sentences with unusually low p-values may indicate deviations from typical English letter distributions.
+
+-   **Conclusion**: Based on these p-values:
+
+    -   The sentence with an unusually low p-value is likely watermarked by an LLM.
+    -   This suggests that its letter frequency distribution deviates significantly from normal English text.
+
+------------------------------------------------------------------------
+
+### One-Sentence Conclusion
+
+The sentence with the lowest p-value (`r which.min(p_values)`) is most likely watermarked by an LLM because its letter frequency distribution deviates significantly from typical English text as measured by a chi-squared test.
+
+------------------------------------------------------------------------
