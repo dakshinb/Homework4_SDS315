@@ -1,0 +1,37 @@
+# General OS files
+*.log
+*.ini
+*.xml
+*.regtrans-ms
+*.blf
+NTUSER.*
+ntuser.*
+
+# IDE/Editor files
+.vscode/
+.idea/
+
+# User-specific folders
+AppData/
+Contacts/
+Creative Cloud Files Personal Account*/
+Desktop/
+Documents/
+Downloads/
+Favorites/
+Links/
+Music/
+OneDrive/
+Pictures/
+Saved Games/
+Searches/
+Videos/
+
+# Windows-specific
+Apple/
+NCH Software Suite/
+
+# R Project files (optional)
+.Rproj.user/
+*.RData
+*.Rhistory
